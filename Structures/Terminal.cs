@@ -1,4 +1,5 @@
-﻿using Rocket.Unturned.Player;
+﻿using DevIncModule;
+using Rocket.Unturned.Player;
 using SDG.Unturned;
 using Steamworks;
 using System;
@@ -40,7 +41,22 @@ namespace Terminals.Structures
                 return;
             }
 
-            // TODO: сделать отправку UI эффекта через params
-        }               
+            DisplayTerminalItems(steamID);            
+        }
+
+        public void DisplayTerminalItems(CSteamID steamID)
+        {
+            ushort id = storage.baskets != null ? (ushort)EUIs.ORDERING_PAGE : (ushort)EUIs.GROCERY_PAGE;
+
+            EffectManager.sendUIEffect(id, 1000, steamID, true);
+
+            foreach(StoredItem storedItem in storage.storedItems)
+            {
+                if(DIFinder.GetItemAsset(storedItem.ID, out ItemAsset itemAsset))
+                {
+                    EffectManager.sendUIEffectText(1000, steamID, true, itemAsset.name.Trim(), $"{itemAsset.name.Trim()} \n {storedItem.amount}");
+                }
+            }
+        }
     }
 }
