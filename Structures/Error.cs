@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Terminals
 {
@@ -16,11 +12,11 @@ namespace Terminals
         public float reloadingTime;
 
         public Error(string _warningMessage = null, string _debugCommand = null, float _reloadingTime = 0f)
-        {            
+        {
             warningMessage = _warningMessage;
             debugCommand = _debugCommand;
             reloadingTime = _reloadingTime;
-        }        
+        }
 
         public static Error GetRandomError()
         {
