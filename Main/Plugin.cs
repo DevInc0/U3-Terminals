@@ -1,5 +1,6 @@
 ﻿using DevIncModule;
 using Rocket.Core.Plugins;
+using Rocket.Unturned.Player;
 using SDG.Unturned;
 using System.Collections.Generic;
 using UnityEngine;
@@ -13,16 +14,36 @@ namespace Terminals
 
         protected override void Load()
         {
-            DIMessager.PluginInfoStatus(this);
+            DIMessager.WritePluginInfo(this);
             Instance = this;
             Level.onPostLevelLoaded += Event_OnPostLevelLoaded;
+            UseableConsumeable.onConsumeRequested += Event_OnConsumeRequested;
         }
 
         protected override void Unload()
         {
-            DIMessager.PluginInfoStatus(this);
+            DIMessager.WritePluginInfo(this);
             Instance = null;
             Level.onPostLevelLoaded -= Event_OnPostLevelLoaded;
+            UseableConsumeable.onConsumeRequested -= Event_OnConsumeRequested;
+        }
+
+        private void Event_OnConsumeRequested(Player player, ItemConsumeableAsset itemAsset, ref bool shouldAllow)
+        {
+            // Should delete. Testing thing.
+            Rocket.Core.Logging.Logger.Log($"Player name - {player.gameObject.name} or {player.transform.gameObject.name}");
+
+            var unturnedPlayer = UnturnedPlayer.FromPlayer(player);
+            Transform objectTransform = DamageTool.raycast(new Ray(player.look.aim.position, player.look.aim.forward), 10f, RayMasks.ROOFS_INTERACT).transform;
+
+            if (itemAsset.id == Configuration.Instance.GroceryTerminalID || itemAsset.id == Configuration.Instance.OrderingTerminalID)
+            {
+                shouldAllow = false;
+
+                Terminal terminal = Configuration.Instance.terminals.Find(newTerminal => newTerminal.position == objectTransform.position);
+
+                terminal.OpenTerminal(unturnedPlayer.CSteamID);
+            }
         }
 
         private void Event_OnPostLevelLoaded(int level)
