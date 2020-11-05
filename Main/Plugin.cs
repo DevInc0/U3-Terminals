@@ -32,6 +32,7 @@ namespace Terminals
         {
             // Should delete. Testing thing.
             Rocket.Core.Logging.Logger.Log($"Player name - {player.gameObject.name} or {player.transform.gameObject.name}");
+            //
 
             var unturnedPlayer = UnturnedPlayer.FromPlayer(player);
             Transform objectTransform = DamageTool.raycast(new Ray(player.look.aim.position, player.look.aim.forward), 10f, RayMasks.ROOFS_INTERACT).transform;
