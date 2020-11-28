@@ -18,9 +18,9 @@ namespace Terminals
         {
             errors = new List<Error>
             {
-                new Error("#//$% ERROR **!@   ESRCH | No such process", "crt /n prc/ *|Main| -res -rel -d", 300f),
-                new Error("#()% ERROR ||!@   EINTR | Interrupted system call", "gen_ser connect *|Main| -res -rel -d", 600f),
-                new Error("#_001 ERROR |!!*!@   EIO | Input/output error", "*|Main| -res -rel -d", 900f)
+                new Error("ESRCH \n No such process", "crt /n prc/ *|Main| -res -rel -d [0xPARAMETER]", 300f),
+                new Error("EINTR \n Interrupted system call", "gen_ser connect *|Main| -res -rel -d [PARAMETER]", 600f),
+                new Error("EIO \n Input/output error", "*|Main| -res -rel -d [0xPARAMETER]", 900f)
             };
 
             standardGroceryItems = new List<StoredItem>

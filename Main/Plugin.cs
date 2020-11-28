@@ -2,6 +2,8 @@
 using Rocket.Core.Plugins;
 using Rocket.Unturned.Player;
 using SDG.Unturned;
+using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -18,39 +20,29 @@ namespace Terminals
             Instance = this;
             Level.onPostLevelLoaded += Event_OnPostLevelLoaded;
             UseableConsumeable.onConsumeRequested += Event_OnConsumeRequested;
+            EffectManager.onEffectButtonClicked += Event_OnButtonClicked;
+            EffectManager.onEffectTextCommitted += Event_OnTextCommitted;
         }
 
         protected override void Unload()
         {
+            ReloadAllTerminals();
             DIMessager.WritePluginInfo(this);
             Instance = null;
             Level.onPostLevelLoaded -= Event_OnPostLevelLoaded;
             UseableConsumeable.onConsumeRequested -= Event_OnConsumeRequested;
-        }
-
-        private void Event_OnConsumeRequested(Player player, ItemConsumeableAsset itemAsset, ref bool shouldAllow)
-        {
-            // Should delete. Testing thing.
-            Rocket.Core.Logging.Logger.Log($"Player name - {player.gameObject.name} or {player.transform.gameObject.name}");
-            //
-
-            var unturnedPlayer = UnturnedPlayer.FromPlayer(player);
-            Transform objectTransform = DamageTool.raycast(new Ray(player.look.aim.position, player.look.aim.forward), 10f, RayMasks.ROOFS_INTERACT).transform;
-
-            if (itemAsset.id == Configuration.Instance.GroceryTerminalID || itemAsset.id == Configuration.Instance.OrderingTerminalID)
-            {
-                shouldAllow = false;
-
-                Terminal terminal = Configuration.Instance.terminals.Find(newTerminal => newTerminal.position == objectTransform.position);
-
-                terminal.OpenTerminal(unturnedPlayer.CSteamID);
-            }
+            EffectManager.onEffectButtonClicked -= Event_OnButtonClicked;
+            EffectManager.onEffectTextCommitted -= Event_OnTextCommitted;
         }
 
         private void Event_OnPostLevelLoaded(int level)
         {
-            foreach (Transform transform in LevelObjects.models)
+            foreach (Transform transform in Level.level)
             {
+                // Should delete. Testing thing.
+                Rocket.Core.Logging.Logger.Log($"Transform name - {transform.gameObject.name}");
+                //
+
                 var ID = ushort.Parse(transform.gameObject.name);
 
                 if (ID == Configuration.Instance.GroceryTerminalID || ID == Configuration.Instance.OrderingTerminalID)
@@ -61,6 +53,76 @@ namespace Terminals
                 }
             }
 
+            Configuration.Save();
+        }
+
+        private void Event_OnConsumeRequested(Player player, ItemConsumeableAsset itemAsset, ref bool shouldAllow)
+        {
+            // Should delete. Testing thing.
+            Rocket.Core.Logging.Logger.Log($"Player name - {player.gameObject.name} or {player.transform.gameObject.name}");
+            //
+            var unturnedPlayer = UnturnedPlayer.FromPlayer(player);
+            Transform objectTransform = DamageTool.raycast(new Ray(player.look.aim.position, player.look.aim.forward), 10f, RayMasks.ROOFS_INTERACT).transform;
+
+            if (itemAsset.id == Configuration.Instance.GroceryTerminalID || itemAsset.id == Configuration.Instance.OrderingTerminalID)
+            {
+                shouldAllow = false;
+                Terminal terminal = Configuration.Instance.terminals.Find(newTerminal => newTerminal.position == objectTransform.position);
+                terminal.OpenTerminal(unturnedPlayer.CSteamID);
+            }
+        }
+
+        private void Event_OnButtonClicked(Player player, string buttonName)
+        {
+            var unturnedPlayer = UnturnedPlayer.FromPlayer(player);
+            Transform objectTransform = DamageTool.raycast(new Ray(player.look.aim.position, player.look.aim.forward), 10f, RayMasks.ROOFS_INTERACT).transform;
+
+            if (buttonName == "Terminal.CloseTerminal")
+            {
+                foreach (ushort id in Enum.GetValues(typeof(EUIs)))
+                    EffectManager.askEffectClearByID(id, unturnedPlayer.CSteamID);
+
+                return;
+            }
+        }
+
+        private void Event_OnTextCommitted(Player player, string inputFieldName, string text)
+        {
+            var unturnedPlayer = UnturnedPlayer.FromPlayer(player);
+            Transform objectTransform = DamageTool.raycast(new Ray(player.look.aim.position, player.look.aim.forward), 10f, RayMasks.ROOFS_INTERACT).transform;
+            var terminal = Configuration.Instance.terminals.Find(newTerminal => newTerminal.position == objectTransform.position);
+
+            if (inputFieldName == "DebugTerminal.CommandLine")
+            {
+                // вытаскиваем из текста символы, идущие после [ . А затем чистим от 0x и конечной ]
+                string parameter = text.Trim().Substring(text.IndexOf('[') + 1);
+                parameter = parameter.Contains("0x") ? parameter.Remove(parameter.Length - 1).Remove(0, 2) : parameter.Remove(parameter.Length - 1);
+
+                if (terminal.error.FixError(parameter))
+                {
+                    terminal.isReloading = true;
+                    StartCoroutine(StartTerminalReloading(terminal));
+                }
+            }
+        }
+
+        IEnumerator StartTerminalReloading(Terminal terminal)
+        {
+            yield return new WaitForSeconds(terminal.error.reloadingTime);
+            terminal.ReloadTerminal();
+
+        }
+
+        private void ReloadAllTerminals()
+        {
+            foreach (Terminal terminal in Configuration.Instance.terminals)
+            {
+                if (terminal.isReloading)
+                {
+                    StopCoroutine(StartTerminalReloading(terminal));
+                    terminal.ReloadTerminal();
+                }
+            }
             Configuration.Save();
         }
     }

@@ -15,20 +15,15 @@ namespace Terminals
 
         public Error error;
 
-        public Terminal(Vector3 _position, Storage _storage, Error _error)
+        public Terminal(Vector3 _position, Storage _storage, Error _error, bool _isReloading = false)
         {
             position = _position;
             storage = _storage;
             error = _error;
+            isReloading = _isReloading;
         }
 
-        public bool isReloading
-        {
-            get
-            {
-                return error.reloadingTime != 0f;
-            }
-        }
+        public bool isReloading;
 
         public void OpenTerminal(CSteamID steamID)
         {
@@ -40,7 +35,7 @@ namespace Terminals
             if (storage.storedItems.TrueForAll(item => item.amount == 0))
             {
                 error = Error.GetRandomError();
-                EffectManager.sendUIEffect((ushort)EUIs.DEBUG_TERMINAL, 1000, steamID, true, error.warningMessage);
+                EffectManager.sendUIEffect((ushort)EUIs.DEBUG_TERMINAL, 1000, steamID, true, error.parameters[0], error.parameters[1], error.parameters[2], error.warningMessage);
                 return;
             }
 
@@ -54,6 +49,8 @@ namespace Terminals
             storage.storedItems = new List<StoredItem>(storage.baskets == null ? Plugin.Instance.Configuration.Instance.standardGroceryItems : Plugin.Instance.Configuration.Instance.standardOrderingItems);
 
             if (storage.baskets != null) storage.baskets.Clear();
+
+            isReloading = false;
 
             Plugin.Instance.Configuration.Save();
         }
