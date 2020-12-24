@@ -3,6 +3,7 @@ using Rocket.Unturned.Player;
 using SDG.Unturned;
 using Steamworks;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace Terminals
@@ -11,19 +12,22 @@ namespace Terminals
     {
         public Vector3 position;
 
-        public Storage storage;
+        public Dictionary<ulong, List<ushort>> baskets;
+
+        public Dictionary<ushort, byte> items;
 
         public Error error;
 
-        public Terminal(Vector3 _position, Storage _storage, Error _error, bool _isReloading = false)
+        public bool isReloading;
+
+        public Terminal(Vector3 _position, Dictionary<ulong, List<ushort>> _baskets, Dictionary<ushort, byte> _items, Error _error = new Error(), bool _isReloading = false)
         {
             position = _position;
-            storage = _storage;
+            baskets = _baskets;
+            items = _items;
             error = _error;
             isReloading = _isReloading;
         }
-
-        public bool isReloading;
 
         public void OpenTerminal(CSteamID steamID)
         {
@@ -32,9 +36,9 @@ namespace Terminals
 
             UnturnedPlayer.FromCSteamID(steamID).Player.setPluginWidgetFlag(EPluginWidgetFlags.Modal, true);
 
-            if (storage.storedItems.TrueForAll(item => item.amount == 0))
+            if (items.All(item => item.Value == 0))
             {
-                error = Error.GetRandomError();
+                error.CreateError();
                 EffectManager.sendUIEffect((ushort)EUIs.DEBUG_TERMINAL, 1000, steamID, true, error.parameters[0], error.parameters[1], error.parameters[2], error.warningMessage);
                 return;
             }
@@ -42,13 +46,11 @@ namespace Terminals
             DisplayTerminalItems(steamID);
         }
 
-        public void ReloadTerminal()
+        public void ReloadTerminal(Dictionary<ushort, byte> _items)
         {
+            items = _items;
+
             error = new Error();
-
-            storage.storedItems = new List<StoredItem>(storage.baskets == null ? Plugin.Instance.Configuration.Instance.standardGroceryItems : Plugin.Instance.Configuration.Instance.standardOrderingItems);
-
-            if (storage.baskets != null) storage.baskets.Clear();
 
             isReloading = false;
 
@@ -57,19 +59,38 @@ namespace Terminals
 
         public void DisplayTerminalItems(CSteamID steamID)
         {
-            ushort id = storage.baskets != null ? (ushort)EUIs.ORDERING_PAGE : (ushort)EUIs.GROCERY_PAGE;
-
-            EffectManager.sendUIEffect(id, 1000, steamID, true);
+            EffectManager.sendUIEffect((ushort)EUIs.ORDERING_PAGE, 1000, steamID, true);
 
             byte index = 0;
-            foreach (StoredItem storedItem in storage.storedItems)
+            foreach (KeyValuePair<ushort, byte> item in items)
             {
-                if (DIFinder.GetItemAsset(storedItem.ID, out ItemAsset itemAsset))
+                if (DIFinder.GetItemAsset(item.Key, out ItemAsset itemAsset))
                 {
-                    EffectManager.sendUIEffectText(1000, steamID, true, $"Box_{index}", $"{itemAsset.name.Trim()} \n {storedItem.amount}");
+                    EffectManager.sendUIEffectText(1000, steamID, true, $"Terminal.ItemBox_{index}", $"{itemAsset.name.Trim()} \n {item.Value}");
                     index++;
                 }
             }
+        }
+
+        public void AddItemToPlayerBasket(byte boxNumber, ulong steamID)
+        {
+            KeyValuePair<ushort, byte> item = items.ElementAt(boxNumber);
+
+            if (baskets.ContainsKey(steamID))
+            {
+                baskets[steamID].Add(item.Key);
+            }
+            else
+            {
+                baskets.Add(steamID, new List<ushort> { item.Key });
+            }
+            EffectManager.sendUIEffect((ushort)EUIs.SUCCESS, 1001, (CSteamID)steamID, true);
+        }
+
+        public void RemoveItemFromPlayerBasket(byte boxNumber, ulong steamID)
+        {
+            baskets[steamID].Remove(items.ElementAt(boxNumber).Key);
+            EffectManager.sendUIEffect((ushort)EUIs.SUCCESS, 1001, (CSteamID)steamID, true);
         }
     }
 }

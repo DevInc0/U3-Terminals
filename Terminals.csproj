@@ -73,13 +73,9 @@
   <ItemGroup>
     <Compile Include="Main\Config.cs" />
     <Compile Include="Main\Plugin.cs" />
-    <Compile Include="Main\PluginUtils.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Structures\Error.cs" />
     <Compile Include="Structures\EUIs.cs" />
-    <Compile Include="Structures\PlayerShoppingBasket.cs" />
-    <Compile Include="Structures\Storage.cs" />
-    <Compile Include="Structures\StoredItem.cs" />
     <Compile Include="Structures\Terminal.cs" />
   </ItemGroup>
   <ItemGroup />

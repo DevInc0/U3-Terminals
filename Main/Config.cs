@@ -12,10 +12,15 @@ namespace Terminals
 
         public List<Error> errors;
 
-        public List<StoredItem> standardGroceryItems, standardOrderingItems;
+        public List<StoredItem> groceryItems, orderingItems;
 
         public void LoadDefaults()
         {
+            GroceryTerminalID = 0;
+            OrderingTerminalID = 0;
+
+            terminals = new List<Terminal>();
+
             errors = new List<Error>
             {
                 new Error("ESRCH \n No such process", "crt /n prc/ *|Main| -res -rel -d [0xPARAMETER]", 300f),
@@ -23,20 +28,17 @@ namespace Terminals
                 new Error("EIO \n Input/output error", "*|Main| -res -rel -d [0xPARAMETER]", 900f)
             };
 
-            standardGroceryItems = new List<StoredItem>
+            groceryItems = new List<StoredItem>
             {
                 new StoredItem { ID = 81, amount = 2 },
                 new StoredItem { ID = 15, amount = 3 }
             };
 
-            standardOrderingItems = new List<StoredItem>
+            orderingItems = new List<StoredItem>
             {
                 new StoredItem { ID = 253, amount = 4 },
                 new StoredItem { ID = 269, amount = 1 }
             };
-
-            GroceryTerminalID = 0;
-            OrderingTerminalID = 0;
         }
     }
 }

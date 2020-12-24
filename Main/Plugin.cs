@@ -47,7 +47,11 @@ namespace Terminals
 
                 if (ID == Configuration.Instance.GroceryTerminalID || ID == Configuration.Instance.OrderingTerminalID)
                 {
-                    Storage storage = ID == Configuration.Instance.GroceryTerminalID ? new Storage(new List<StoredItem>(Configuration.Instance.standardGroceryItems)) : new Storage(new List<StoredItem>(Configuration.Instance.standardOrderingItems), new List<PlayerShoppingBasket>());
+                    Storage storage;
+                    if (ID == Configuration.Instance.GroceryTerminalID)
+                        storage = new Storage(new List<StoredItem>(Configuration.Instance.groceryItems), new Dictionary<ulong, List<ushort>>());
+                    else
+                        storage = new Storage(new List<StoredItem>(Configuration.Instance.orderingItems), new Dictionary<ulong, List<ushort>>());
                     var newTerminal = new Terminal(transform.position, storage, new Error());
                     Configuration.Instance.terminals.Add(newTerminal);
                 }
@@ -76,13 +80,20 @@ namespace Terminals
         {
             var unturnedPlayer = UnturnedPlayer.FromPlayer(player);
             Transform objectTransform = DamageTool.raycast(new Ray(player.look.aim.position, player.look.aim.forward), 10f, RayMasks.ROOFS_INTERACT).transform;
+            Terminal currentTerminal = Configuration.Instance.terminals.Find(newTerminal => newTerminal.position == objectTransform.position);
 
             if (buttonName == "Terminal.CloseTerminal")
             {
                 foreach (ushort id in Enum.GetValues(typeof(EUIs)))
                     EffectManager.askEffectClearByID(id, unturnedPlayer.CSteamID);
+            }
+            else if (buttonName.Contains("Terminal.AddButton"))
+            {
+                byte boxNumber = byte.Parse(buttonName.Trim().Substring(buttonName.Length - 1));
+                if (currentTerminal.storage.items.Count <= boxNumber)
+                {
 
-                return;
+                }
             }
         }
 
@@ -94,11 +105,7 @@ namespace Terminals
 
             if (inputFieldName == "DebugTerminal.CommandLine")
             {
-                // вытаскиваем из текста символы, идущие после [ . А затем чистим от 0x и конечной ]
-                string parameter = text.Trim().Substring(text.IndexOf('[') + 1);
-                parameter = parameter.Contains("0x") ? parameter.Remove(parameter.Length - 1).Remove(0, 2) : parameter.Remove(parameter.Length - 1);
-
-                if (terminal.error.FixError(parameter))
+                if (terminal.error.FixError(text))
                 {
                     terminal.isReloading = true;
                     StartCoroutine(StartTerminalReloading(terminal));
@@ -110,7 +117,6 @@ namespace Terminals
         {
             yield return new WaitForSeconds(terminal.error.reloadingTime);
             terminal.ReloadTerminal();
-
         }
 
         private void ReloadAllTerminals()

@@ -21,16 +21,28 @@ namespace Terminals
             parameters = _parameters;
         }
 
-        public static Error GetRandomError()
+        public void CreateError()
         {
-            Error newError = Plugin.Instance.Configuration.Instance.errors[UnityEngine.Random.Range(0, 2)];
-            newError.parameters = new PluginUtils().GetRandomErrorParameters();
+            Error error = Plugin.Instance.Configuration.Instance.errors[UnityEngine.Random.Range(0, 2)];
 
-            return newError;
+            var chars = "0123456789abcdef";
+
+            for (var index = 0; index < error.parameters.Length; index++)
+            {
+                for (var symbol = 0; symbol < 32; symbol++)
+                    error.parameters[index] += chars[UnityEngine.Random.Range(0, chars.Length - 1)];
+            }
+
+            this = error;
         }
 
-        public bool FixError(string input)
+        public bool FixError(string text)
         {
+            string inputParameter = text.Trim().Remove(text.Length - 1).Substring(text.IndexOf('[') + 1);
+
+            if (inputParameter.Contains("0x"))
+                inputParameter.Remove(0, 2);
+
             var answer = string.Empty;
 
             if (warningMessage.Contains("ESRCH"))
@@ -54,11 +66,10 @@ namespace Terminals
                 foreach (string parameter in parameters)
                     number += Convert.ToInt64(parameter.Substring(0, 3), 16);
 
-                // число - последний символ последней строки(переводя из 16 в 10). и в ответ пишим разность в 16 системе
                 answer = Convert.ToString((number - Convert.ToInt64(parameters[2][31].ToString(), 16)), 16);
             }
 
-            return input == answer;
+            return inputParameter == answer;
         }
     }
 }
