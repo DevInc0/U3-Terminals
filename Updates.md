@@ -3,11 +3,11 @@ Special for ...
 
 Updates:
 
--Code refactoring.
+-Code refactoring
 
--Added more options for interacting with terminals.
+-Error correction
 
--A lot of errors. Still in progress...
+-Bug fixes
 
 © DevInc (2019)
-12.24.2020
+12.25.2020
