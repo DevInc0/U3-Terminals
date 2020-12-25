@@ -6,18 +6,18 @@ namespace Terminals
     public class Config : IRocketPluginConfiguration
     {
 
-        public ushort GroceryTerminalID, OrderingTerminalID;
+        public ushort groceryTerminalID, orderingTerminalID;
 
         public List<Terminal> terminals;
 
         public List<Error> errors;
 
-        public List<StoredItem> groceryItems, orderingItems;
+        public Dictionary<ushort, byte> groceryItems, orderingItems;
 
         public void LoadDefaults()
         {
-            GroceryTerminalID = 0;
-            OrderingTerminalID = 0;
+            groceryTerminalID = 0;
+            orderingTerminalID = 0;
 
             terminals = new List<Terminal>();
 
@@ -28,16 +28,16 @@ namespace Terminals
                 new Error("EIO \n Input/output error", "*|Main| -res -rel -d [0xPARAMETER]", 900f)
             };
 
-            groceryItems = new List<StoredItem>
+            groceryItems = new Dictionary<ushort, byte>
             {
-                new StoredItem { ID = 81, amount = 2 },
-                new StoredItem { ID = 15, amount = 3 }
+                { 81, 2 },
+                { 15, 3 } 
             };
 
-            orderingItems = new List<StoredItem>
+            orderingItems = new Dictionary<ushort, byte>
             {
-                new StoredItem { ID = 253, amount = 4 },
-                new StoredItem { ID = 269, amount = 1 }
+                { 253, 4 },
+                { 269, 1 }
             };
         }
     }

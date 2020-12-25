@@ -6,6 +6,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System.Linq;
 
 namespace Terminals
 {
@@ -45,14 +46,14 @@ namespace Terminals
 
                 var ID = ushort.Parse(transform.gameObject.name);
 
-                if (ID == Configuration.Instance.GroceryTerminalID || ID == Configuration.Instance.OrderingTerminalID)
+                if (ID == Configuration.Instance.groceryTerminalID || ID == Configuration.Instance.orderingTerminalID)
                 {
-                    Storage storage;
-                    if (ID == Configuration.Instance.GroceryTerminalID)
-                        storage = new Storage(new List<StoredItem>(Configuration.Instance.groceryItems), new Dictionary<ulong, List<ushort>>());
+                    Dictionary<ushort, byte> items;
+                    if (ID == Configuration.Instance.groceryTerminalID)
+                        items = new Dictionary<ushort, byte>(Configuration.Instance.groceryItems);
                     else
-                        storage = new Storage(new List<StoredItem>(Configuration.Instance.orderingItems), new Dictionary<ulong, List<ushort>>());
-                    var newTerminal = new Terminal(transform.position, storage, new Error());
+                        items = new Dictionary<ushort, byte>(Configuration.Instance.orderingItems);
+                    var newTerminal = new Terminal(transform.position, items);
                     Configuration.Instance.terminals.Add(newTerminal);
                 }
             }
@@ -68,7 +69,7 @@ namespace Terminals
             var unturnedPlayer = UnturnedPlayer.FromPlayer(player);
             Transform objectTransform = DamageTool.raycast(new Ray(player.look.aim.position, player.look.aim.forward), 10f, RayMasks.ROOFS_INTERACT).transform;
 
-            if (itemAsset.id == Configuration.Instance.GroceryTerminalID || itemAsset.id == Configuration.Instance.OrderingTerminalID)
+            if (itemAsset.id == Configuration.Instance.groceryTerminalID || itemAsset.id == Configuration.Instance.orderingTerminalID)
             {
                 shouldAllow = false;
                 Terminal terminal = Configuration.Instance.terminals.Find(newTerminal => newTerminal.position == objectTransform.position);
@@ -90,7 +91,7 @@ namespace Terminals
             else if (buttonName.Contains("Terminal.AddButton"))
             {
                 byte boxNumber = byte.Parse(buttonName.Trim().Substring(buttonName.Length - 1));
-                if (currentTerminal.storage.items.Count <= boxNumber)
+                if (currentTerminal.items.Count <= boxNumber)
                 {
 
                 }
@@ -115,8 +116,10 @@ namespace Terminals
 
         IEnumerator StartTerminalReloading(Terminal terminal)
         {
-            yield return new WaitForSeconds(terminal.error.reloadingTime);
+            yield return new WaitForSeconds(terminal.error.reloadingTime);            
+
             terminal.ReloadTerminal();
+            StopCoroutine(StartTerminalReloading(terminal));
         }
 
         private void ReloadAllTerminals()

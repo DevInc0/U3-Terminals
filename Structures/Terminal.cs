@@ -20,7 +20,7 @@ namespace Terminals
 
         public bool isReloading;
 
-        public Terminal(Vector3 _position, Dictionary<ulong, List<ushort>> _baskets, Dictionary<ushort, byte> _items, Error _error = new Error(), bool _isReloading = false)
+        public Terminal(Vector3 _position, Dictionary<ushort, byte> _items, Dictionary<ulong, List<ushort>> _baskets = default, Error _error = default, bool _isReloading = false)
         {
             position = _position;
             baskets = _baskets;
@@ -46,8 +46,15 @@ namespace Terminals
             DisplayTerminalItems(steamID);
         }
 
-        public void ReloadTerminal(Dictionary<ushort, byte> _items)
+        public void ReloadTerminal()
         {
+            Dictionary<ushort, byte> _items;
+
+            if (items.Keys.Intersect(Plugin.Instance.Configuration.Instance.groceryItems.Keys).Count() == items.Count)
+                _items = new Dictionary<ushort, byte>(Plugin.Instance.Configuration.Instance.groceryItems);
+            else
+                _items = new Dictionary<ushort, byte>(Plugin.Instance.Configuration.Instance.orderingItems);
+
             items = _items;
 
             error = new Error();
@@ -74,16 +81,12 @@ namespace Terminals
 
         public void AddItemToPlayerBasket(byte boxNumber, ulong steamID)
         {
-            KeyValuePair<ushort, byte> item = items.ElementAt(boxNumber);
+            ushort ID = items.ElementAt(boxNumber).Key;
 
-            if (baskets.ContainsKey(steamID))
-            {
-                baskets[steamID].Add(item.Key);
-            }
-            else
-            {
-                baskets.Add(steamID, new List<ushort> { item.Key });
-            }
+            if (baskets.ContainsKey(steamID))            
+                baskets[steamID].Add(ID);            
+            else            
+                baskets.Add(steamID, new List<ushort> { ID });            
             EffectManager.sendUIEffect((ushort)EUIs.SUCCESS, 1001, (CSteamID)steamID, true);
         }
 
