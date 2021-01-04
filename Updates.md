@@ -9,6 +9,6 @@ Updates:
 
 -Bug fixes
 
-© DevInc (2019)
+© DevInc (2019-2020)
 
 12.25.2020
